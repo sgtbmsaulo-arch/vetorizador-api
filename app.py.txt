@@ -1,0 +1,37 @@
+from flask import Flask, request, send_file
+from flask_cors import CORS
+import os
+from vector_engine import NextGenVectorEngine
+
+app = Flask(__name__)
+CORS(app)  # Permite requisições vindas do seu arquivo HTML
+
+UPLOAD_FOLDER = '/tmp/uploads'
+OUTPUT_FOLDER = '/tmp/outputs'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+@app.route('/vectorize', methods=['POST'])
+def vectorize():
+    if 'image' not in request.files:
+        return {"error": "Nenhuma imagem enviada"}, 400
+    
+    file = request.files['image']
+    max_colors = int(request.form.get('colors', 6))
+    
+    input_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    output_path = os.path.join(OUTPUT_FOLDER, f"vetor_{file.filename}.svg")
+    
+    file.save(input_path)
+
+    engine = NextGenVectorEngine(
+        image_path=input_path, 
+        max_colors=max_colors, 
+        smooth_factor=0.0025
+    )
+    engine.vectorize_to_svg(output_path)
+
+    return send_file(output_path, as_attachment=True, download_name="arte_vetorizada.svg")
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
