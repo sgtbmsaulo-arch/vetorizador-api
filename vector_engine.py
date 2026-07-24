@@ -8,8 +8,8 @@ class NextGenVectorEngine:
     def __init__(self, image_path, max_colors=8, smooth_factor=0.003):
         """
         :param image_path: Caminho da imagem de entrada (PNG, JPG, etc.)
-        :param max_colors: Número de cores para quantização e separação de camadas.
-        :param smooth_factor: Fator de simplificação de curvas (Ramer-Douglas-Peucker).
+        :param max_colors: NÃºmero de cores para quantizaÃ§Ã£o e separaÃ§Ã£o de camadas.
+        :param smooth_factor: Fator de simplificaÃ§Ã£o de curvas (Ramer-Douglas-Peucker).
         """
         self.image_path = image_path
         self.max_colors = max_colors
@@ -20,13 +20,13 @@ class NextGenVectorEngine:
         self.width = 0
 
     def load_and_preprocess(self, scale_factor=2.0):
-        """Passo 1: Carregamento, Upscaling e Filtragem Bilateral de Ruído."""
+        """Passo 1: Carregamento, Upscaling e Filtragem Bilateral de RuÃ­do."""
         if not os.path.exists(self.image_path):
-            raise FileNotFoundError(f"Imagem não encontrada: {self.image_path}")
+            raise FileNotFoundError(f"Imagem nÃ£o encontrada: {self.image_path}")
 
         self.img_bgr = cv2.imread(self.image_path)
         
-        # Upscaling suave para melhorar definição de bordas pequenas
+        # Upscaling suave para melhorar definiÃ§Ã£o de bordas pequenas
         if scale_factor > 1.0:
             self.img_bgr = cv2.resize(
                 self.img_bgr, (0, 0), 
@@ -36,12 +36,12 @@ class NextGenVectorEngine:
 
         self.height, self.width, _ = self.img_bgr.shape
 
-        # Filtro Bilateral: preserva bordas afiadas enquanto remove ruídos
+        # Filtro Bilateral: preserva bordas afiadas enquanto remove ruÃ­dos
         filtered = cv2.bilateralFilter(self.img_bgr, d=9, sigmaColor=75, sigmaSpace=75)
         self.img_rgb = cv2.cvtColor(filtered, cv2.COLOR_BGR2RGB)
 
     def color_quantization(self):
-        """Passo 2: Agrupamento de Cores por K-Means (Segmentação de Camadas)."""
+        """Passo 2: Agrupamento de Cores por K-Means (SegmentaÃ§Ã£o de Camadas)."""
         pixels = self.img_rgb.reshape((-1, 3))
         
         kmeans = KMeans(n_clusters=self.max_colors, random_state=42, n_init=10)
@@ -54,7 +54,7 @@ class NextGenVectorEngine:
         return palette, labels_grid
 
     def _contour_to_svg_path(self, contour):
-        """Passo 3: Aplica algoritmo de simplificação e converte em caminho SVG."""
+        """Passo 3: Aplica algoritmo de simplificaÃ§Ã£o e converte em caminho SVG."""
         epsilon = self.smooth_factor * cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, epsilon, True)
 
@@ -73,7 +73,7 @@ class NextGenVectorEngine:
         return " ".join(path_data)
 
     def vectorize_to_svg(self, output_path="output_vector.svg"):
-        """Passo 4: Processamento Topológico e Gravação da Arte Vetorial."""
+        """Passo 4: Processamento TopolÃ³gico e GravaÃ§Ã£o da Arte Vetorial."""
         self.load_and_preprocess()
         palette, labels_grid = self.color_quantization()
 
